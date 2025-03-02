@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+<script>
+    let scene, camera, renderer, controls, model, raycaster;
+
+    const textures = {};
+    const textureLoader = new THREE.TextureLoader();
+    const decals = [];
+
+    // Preload all textures
+    Promise.all([
+      loadTexture('burning.png'),
+      loadTexture('stabbing.png'),
+      loadTexture('sharp.png'),
+      loadTexture('radiating.png'),
+      loadTexture('crawling_pain.png'),
+      loadTexture('explosive.png'),
+      loadTexture('numbing.png'),
+      loadTexture('pressure.png'),
+      loadTexture('tingling.png')
+    ]).then(init);
+
+    function loadTexture(name) {
+      return new Promise((resolve) => {
+        textureLoader.load(`textures/${name}`, (tex) => {
+          textures[name] = tex;
+          resolve();
+        });
+      });
+    }
+
+    function init() {
+      // Scene setup
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // Lighting
+      const light = new THREE.AmbientLight(0xffffff, 0.8);
+      scene.add(light);
+
+      // Load model
+      new THREE.GLTFLoader().load('models/${widget.sex}_body.glb', (gltf) => {
+        model = gltf.scene;
+        scene.add(model);
+      });
+
+      // Controls
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      camera.position.set(0, 1.5, 2);
+      controls.update();
+
+      // Raycaster setup
+      raycaster = new THREE.Raycaster();
+
+      // Animation loop
+      animate();
+    }
+
+    function addDecal(position, textureName) {
+      const material = new THREE.SpriteMaterial({
+        map: textures[textureName],
+        transparent: true,
+        depthTest: true
+      });
+
+      const decal = new THREE.Sprite(material);
+      decal.position.copy(position);
+      decal.scale.set(0.3, 0.3, 1);
+      scene.add(decal);
+      decals.push(decal);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+      controls.update();
+    }
+</script>
+</body>
+</html>

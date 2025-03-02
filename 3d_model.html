@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Model with Decals</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
+    <script type="module">
+        import { DecalGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.128/examples/jsm/objects/DecalGeometry.js';
+        window.DecalGeometry = DecalGeometry; // Make it globally accessible
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<script>
+    let scene, camera, renderer, model, controls;
+    let decals = [];
+    let raycaster = new THREE.Raycaster();
+    let mouse = new THREE.Vector2();
+    let loader = new THREE.GLTFLoader();
+    let currentModel = null;
+    let currentModelPath = 'models/male_body.glb';  // Default to male model
+    let selectedDecal = 'textures/burning.png'; // Default decal
+
+function placeDecal(intersection) {
+    const decalMaterial = new THREE.MeshBasicMaterial({
+        map: new THREE.TextureLoader().load(selectedDecal),
+        transparent: true
+    });
+
+    const decalGeometry = new THREE.DecalGeometry(
+        intersection.object,
+        intersection.point,
+        intersection.face.normal,
+        new THREE.Vector3(0.2, 0.2, 0.2)
+    );
+
+    const decalMesh = new THREE.Mesh(decalGeometry, decalMaterial);
+    scene.add(decalMesh);
+    decals.push(decalMesh);
+}
+
+// Function to update selected decal
+function setDecal(decalName) {
+    selectedDecal = `textures/${decalName}.png`;
+}
+
+// Example: Call this function from Flutter WebView
+window.setDecal = setDecal;
+
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 1.5, 3);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lighting
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(1, 1, 2);
+        scene.add(light);
+
+        // Orbit Controls
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableZoom = true;
+
+        // Load Default Model
+        loadModel(currentModelPath);
+
+        window.addEventListener('resize', onWindowResize);
+        window.addEventListener('click', onClick);
+
+        animate();
+    }
+
+    function loadModel(modelPath) {
+        if (currentModel) {
+            scene.remove(currentModel);
+        }
+
+        loader.load(modelPath, function(gltf) {
+            currentModel = gltf.scene;
+            currentModel.scale.set(1.5, 1.5, 1.5);
+            scene.add(currentModel);
+        }, undefined, function(error) {
+            console.error("Error loading model:", error);
+        });
+    }
+
+    function setModel(gender) {
+        if (gender === 'male') {
+            currentModelPath = 'models/male_body.glb';
+        } else if (gender === 'female') {
+            currentModelPath = 'models/female_body.glb';
+        }
+        loadModel(currentModelPath);
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function onClick(event) {
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+
+        if (currentModel) {
+            const intersects = raycaster.intersectObject(currentModel, true);
+            if (intersects.length > 0) {
+                placeDecal(intersects[0]);
+            }
+        }
+    }
+
+    function placeDecal(intersection) {
+        const decalMaterial = new THREE.MeshBasicMaterial({
+            map: new THREE.TextureLoader().load('textures/decal.png'),
+            transparent: true
+        });
+
+        const decalGeometry = new THREE.DecalGeometry(
+            intersection.object,
+            intersection.point,
+            intersection.face.normal,
+            new THREE.Vector3(0.2, 0.2, 0.2)
+        );
+
+        const decalMesh = new THREE.Mesh(decalGeometry, decalMaterial);
+        scene.add(decalMesh);
+        decals.push(decalMesh);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    // Flutter WebView can call this function
+    window.setModel = setModel;
+
+    init();
+</script>
+</body>
+</html>
