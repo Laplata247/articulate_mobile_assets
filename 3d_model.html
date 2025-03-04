@@ -27,11 +27,11 @@
     function init() {
         // Scene setup
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(A9A9A9);
+        scene.background = new THREE.Color(0xA9A9A9); // Fixed invalid color
 
-        // Camera
+        // Camera - Position further away to avoid zoom issues
         camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 2, 6); 
+        camera.position.set(0, 2, 10); // Set initial position further away
 
         // Renderer with enhanced settings
         renderer = new THREE.WebGLRenderer({ 
@@ -45,36 +45,32 @@
         document.body.appendChild(renderer.domElement);
 
         // Comprehensive Lighting
-        // Soft ambient light
-        const ambientLight = new THREE.AmbientLight(0xffffff, 2.5);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
         scene.add(ambientLight);
 
-        // Key light (main directional light)
-        const keyLight = new THREE.DirectionalLight(0xffffff, 3);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 2);
         keyLight.position.set(5, 10, 7);
         keyLight.castShadow = true;
         scene.add(keyLight);
 
-        // Fill light (softer, from opposite side)
-        const fillLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        const fillLight = new THREE.DirectionalLight(0xffffff, 1);
         fillLight.position.set(-5, -5, -5);
         scene.add(fillLight);
 
-        // Back light for depth
         const backLight = new THREE.DirectionalLight(0xffffff, 1);
         backLight.position.set(0, 0, -5);
         scene.add(backLight);
 
-        // Point light for additional highlights
-        const pointLight = new THREE.PointLight(0xffffff, 1, 50);
+        const pointLight = new THREE.PointLight(0xffffff, 0.8, 50);
         pointLight.position.set(0, 5, 5);
         scene.add(pointLight);
 
-        // 🛠️ Orbit Controls - Adjust Limits for Better Zoom
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.minDistance = 20;  // Prevent too close zoom-in
-    controls.maxDistance = 500; // Allow more zoom-out
-    controls.enablePan = true;
+        // Orbit Controls - Adjusted for better zooming
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.minDistance = 3;  // Allow zooming closer but not too much
+        controls.maxDistance = 20; // Allow a decent zoom-out
+        controls.enablePan = true;
+
         // Model Loading
         loadModel('models/male_body.glb');
 
@@ -95,15 +91,10 @@
             model = gltf.scene;
             model.traverse((child) => {
                 if (child.isMesh) {
-                    // Ensure mesh receives and casts shadows
                     child.castShadow = true;
                     child.receiveShadow = true;
-
-                    // Adjust material for better visibility
                     if (child.material) {
                         child.material.needsUpdate = true;
-                        
-                        // If it's a standard material, adjust properties
                         if (child.material.metalness !== undefined) {
                             child.material.metalness = 0.2;
                             child.material.roughness = 0.7;
@@ -112,10 +103,10 @@
                 }
             });
 
-            // Scale and position model
-            model.scale.set(0.5, 0.5, 0.5);
-            model.position.set(0, 0, 0);
-            
+            // Adjusted Scale and Position for Better Fit
+            model.scale.set(1.2, 1.2, 1.2); // Slightly smaller
+            model.position.set(0, -1, 0);  // Lower it a bit to fit in view
+
             scene.add(model);
         }, 
         (progress) => {
