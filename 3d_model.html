@@ -69,7 +69,7 @@
         // Orbit Controls - Adjusted for better zooming
         controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.minDistance = 3;  // Allow zooming closer but not too much
-        controls.maxDistance = maxDistance; // Allow a decent zoom-out
+        controls.maxDistance = 100; // Allow a decent zoom-out
         controls.enablePan = true;
 
         // Model Loading
