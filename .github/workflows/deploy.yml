@@ -30,9 +30,9 @@ jobs:
         run: ls -R _site
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4  # ✅ Updated to v4
+        uses: actions/upload-artifact@v4  # ✅ Keep this at v4
         with:
           path: '_site'
 
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4  # ✅ Updated to v4
+        uses: actions/deploy-pages@v1  # ✅ Keep this at v1 (latest available)
