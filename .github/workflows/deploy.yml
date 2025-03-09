@@ -24,12 +24,15 @@ jobs:
         run: |
           mkdir -p _site
           cp -R * _site
-          cp _headers _site/_headers  # ✅ Force include _headers file
+          cp _headers _site/_headers
+
+      - name: Debug files
+        run: ls -R _site
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v4  # ✅ Updated to v4
         with:
-          path: '_site'  # ✅ Ensure the headers file is included
+          path: '_site'
 
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v4  # ✅ Updated to v4
