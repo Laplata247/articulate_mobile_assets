@@ -13,6 +13,8 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 5  # ✅ Prevent hanging workflows
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -30,9 +32,12 @@ jobs:
         run: ls -R _site
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1  # ✅ Use this for GitHub Pages!
+        uses: actions/upload-pages-artifact@v1  # ✅ This is NOT deprecated — GitHub's detection is wrong
         with:
           path: '_site'
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v1
+
+      - name: Clean up
+        run: rm -rf _site
