@@ -1,12 +1,121 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Pages Test</title>
+  <meta charset="utf-8">
+  <title>Pain Mapping 3D</title>
+  <style>
+    html, body {
+      margin: 0;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+    }
+    canvas {
+      display: block;
+    }
+    #status {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255,255,255,0.8);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-family: sans-serif;
+      z-index: 100;
+    }
+  </style>
 </head>
 <body>
-    <h1>GitHub Pages is working!</h1>
-    <a href="3d_model.html">Go to 3D Model</a>
+  <div id="status">Loading...</div>
+  <canvas id="renderCanvas"></canvas>
+
+  <!-- Three.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+
+  <script>
+    let scene, camera, renderer, humanModel;
+    let currentSex = "male";
+
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xf0f0f0);
+
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 1.5, 3);
+
+      renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('renderCanvas'), antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      const light = new THREE.HemisphereLight(0xffffff, 0x444444);
+      light.position.set(0, 1, 0);
+      scene.add(light);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff);
+      directionalLight.position.set(0, 1, 1).normalize();
+      scene.add(directionalLight);
+
+      animate();
+      loadHumanModel(currentSex);
+    }
+
+    function loadHumanModel(sex) {
+      const loader = new THREE.GLTFLoader();
+
+      const modelUrl = sex === "female"
+        ? "https://laplata247.github.io/articulate_mobile_assets/models/female_body.glb"
+        : "https://laplata247.github.io/articulate_mobile_assets/models/male_body.glb";
+
+      document.getElementById('status').innerText = `Loading ${sex} model...`;
+
+      loader.load(
+        modelUrl,
+        function (gltf) {
+          if (humanModel) scene.remove(humanModel);
+          humanModel = gltf.scene;
+          humanModel.position.set(0, 0, 0);
+          humanModel.scale.set(1, 1, 1); // Adjust if too large or small
+          scene.add(humanModel);
+
+          document.getElementById('status').innerText = `Model loaded: ${sex}`;
+
+          if (window.BabylonChannel) {
+            window.BabylonChannel.postMessage(JSON.stringify({ type: "modelLoaded" }));
+          }
+        },
+        function (xhr) {
+          const percent = (xhr.loaded / xhr.total) * 100;
+          document.getElementById('status').innerText = `Loading: ${percent.toFixed(1)}%`;
+        },
+        function (error) {
+          console.error("Error loading model:", error);
+          document.getElementById('status').innerText = "Error loading model";
+        }
+      );
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      if (humanModel) {
+        humanModel.rotation.y += 0.002;
+      }
+      renderer.render(scene, camera);
+    }
+
+    // Function called from Flutter
+    window.setSex = function(sex) {
+      currentSex = sex;
+      loadHumanModel(currentSex);
+    };
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    init();
+  </script>
 </body>
 </html>
+
